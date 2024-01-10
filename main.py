@@ -1,39 +1,44 @@
-import flet as ft
+import sys
+import webbrowser
+
+import pyttsx3 as pt
+import speech_recognition as sr
 
 
-def main(page: ft.Page):
-    page.title = "Comoda editor"
-    page.window_resizable = True
-    page.theme_mode = "dark"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
-
-    def pick_result(e: ft.FilePickerResultEvent):
-        ...
-
-    pick_dialog = ft.FilePicker(on_result=pick_result)
-    page.overlay.append(pick_dialog)
-    selected_files = ft.Text("")
-
-    page.add(
-        ft.Row(
-            [
-                ft.Text("Change file", size=15, weight=500),
-                ft.Row(
-                    [
-                        ft.ElevatedButton(
-                            "Change file",
-                            icon=ft.icons.UPLOAD_FILE,
-                            on_click=lambda _: pick_dialog.pick_files(
-                                allow_multiple=False
-                            ),
-                        )
-                    ]
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        ),
-        ft.Row([]),
-    )
+def listen(word: str):
+    engine = pt.init()
+    engine.say(word)
+    engine.runAndWait()
 
 
-ft.app(main)
+def command():
+    r = sr.Recognizer()
+
+    with sr.Microphone() as source:
+        print("Я вас слушаю.")
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source, 1)
+        audio = r.listen(source)
+    try:
+        task = r.recognize_google(audio).lower()
+        print(f"Вы сказали: {task}")
+    except sr.UnknownValueError:
+        listen("Я не раслышала что вы сказали.")
+        task = command()
+    return task
+
+
+def makesomeshing(task):
+    if "открой сайт" in task:
+        listen("Выполняю")
+        url = "https://google.com"
+        webbrowser.open(url)
+    elif "стоп" in task:
+        listen("Без проблем. Если понадоблюсь - зовите")
+        sys.exit()
+    elif "имя" in task:
+        listen("Меня зовут Энди")
+
+
+while True:
+    makesomeshing(command())
