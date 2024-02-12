@@ -1,44 +1,28 @@
-import sys
-import webbrowser
+import json
 
-import pyttsx3 as pt
-import speech_recognition as sr
+import pyaudio
+from vosk import Model, KaldiRecognizer
 
-
-def listen(word: str):
-    engine = pt.init()
-    engine.say(word)
-    engine.runAndWait()
-
-
-def command():
-    r = sr.Recognizer()
-
-    with sr.Microphone() as source:
-        print("Я вас слушаю.")
-        r.pause_threshold = 1
-        r.adjust_for_ambient_noise(source, 1)
-        audio = r.listen(source)
-    try:
-        task = r.recognize_google(audio).lower()
-        print(f"Вы сказали: {task}")
-    except sr.UnknownValueError:
-        listen("Я не раслышала что вы сказали.")
-        task = command()
-    return task
+model = Model(r"voice_model")
+recognize = KaldiRecognizer(model, 16000)
+p = pyaudio.PyAudio()
+stream = p.open(
+    format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8000
+)
+stream.start_stream()
 
 
-def makesomeshing(task):
-    if "открой сайт" in task:
-        listen("Выполняю")
-        url = "https://google.com"
-        webbrowser.open(url)
-    elif "стоп" in task:
-        listen("Без проблем. Если понадоблюсь - зовите")
-        sys.exit()
-    elif "имя" in task:
-        listen("Меня зовут Энди")
+def listen():
+    while True:
+        data = stream.read(4000, exception_on_overflow=False)
+        if recognize.AcceptWaveform(data) and len(data) < 0:
+            answer = json.loads(recognize.Result())
+            if answer["text"]:
+                yield answer["text"]
 
 
-while True:
-    makesomeshing(command())
+for text in listen():
+    if text == "стоп":
+        quit()
+    elif text == "привет":
+        print("Hello")
