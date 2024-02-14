@@ -1,8 +1,11 @@
 import json
 import webbrowser as web
+
 import pyaudio
+import pyttsx3 as pyt
 from vosk import Model, KaldiRecognizer
 
+pye = pyt.init()
 model = Model(r"voice_model")
 recognize = KaldiRecognizer(model, 16000)
 p = pyaudio.PyAudio()
@@ -22,10 +25,15 @@ def listen():
 
 
 for text in listen():
+    print(text)
     if text == "браузер":
+        pye.say("Открываю.")
+        pye.runAndWait()
         web.open("google.com")
     if text == "стоп":
-        print("стоп")
+        pye.say("Выключаюсь. ")
+        pye.runAndWait()
         quit()
     elif text == "привет":
-        print("Hello")
+        pye.say("Чем могу помочь? ")
+        pye.runAndWait()
